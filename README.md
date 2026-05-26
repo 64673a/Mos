@@ -1,130 +1,111 @@
 <p align="center">
   <a href="https://mos.caldis.me/">
-    <img width="160" src="assets/readme/app-icon.png" alt="Mos app icon">
+    <img width="140" src="assets/readme/app-icon.png" alt="Mos app icon">
   </a>
 </p>
 
-<h1 align="center">Mos</h1>
+<h1 align="center">Mos Enhanced</h1>
 
 <p align="center">
-  让 macOS 上的鼠标滚轮和触控板一样顺滑，同时保留鼠标该有的精准控制。
+  基于 <a href="https://github.com/Caldis/Mos">Caldis/Mos</a> 的个人增强版，保留 Mos 的平滑滚动能力，并加入更完整的鼠标按键与手势工作流。
 </p>
 
 <p align="center">
-  <a href="https://github.com/Caldis/Mos/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Caldis/Mos?style=flat-square"></a>
   <img alt="macOS 10.13+" src="https://img.shields.io/badge/macOS-10.13%2B-black?style=flat-square&logo=apple">
   <img alt="Swift 5" src="https://img.shields.io/badge/Swift-5.0-orange?style=flat-square&logo=swift">
   <a href="LICENSE"><img alt="License: CC BY-NC 4.0" src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square"></a>
 </p>
 
-<p align="center">
-  <a href="README.md">中文</a> ·
-  <a href="README.enUS.md">English</a> ·
-  <a href="README.de.md">Deutsch</a> ·
-  <a href="README.ja.md">日本語</a> ·
-  <a href="README.ko.md">한국어</a> ·
-  <a href="README.ru.md">Русский</a> ·
-  <a href="README.id.md">Bahasa Indonesia</a>
-</p>
+## 关于这个分支
 
-<p align="center">
-  <a href="https://mos.caldis.me/">官网</a> ·
-  <a href="https://github.com/Caldis/Mos/releases">下载</a> ·
-  <a href="https://github.com/Caldis/Mos/wiki">Wiki</a> ·
-  <a href="https://github.com/Caldis/Mos/discussions">Discussions</a>
-</p>
+这个仓库以原版 Mos 为基础继续开发。原作者 README 已完整保留：
 
-<p align="center">
-  <img src="assets/readme/zh-cn/application-settings.png" alt="Mos 按应用配置滚动" width="920">
-</p>
+- [原中文 README](README.upstream.zh-CN.md)
+- [Original English README](README.enUS.md)
+- [Deutsch](README.de.md)
+- [日本語](README.ja.md)
+- [한국어](README.ko.md)
+- [Русский](README.ru.md)
+- [Bahasa Indonesia](README.id.md)
 
-## 为什么是 Mos
+原项目由 Caldis 创建和维护。这个分支的目标不是替代原项目，而是在保留平滑滚动核心体验的基础上，探索更适合多键鼠标、Logitech 设备和高频快捷操作的交互方式。
 
-普通滚轮在 macOS 上常常显得生硬, 这是由于滚轮的精度不足导致的。Mos 会接管鼠标滚轮事件，将滚动行为插值转换成更顺滑的滚动，同时保留每个应用、每个方向、每颗按键的控制权。
+## 我的主要工作
 
-同时, 你还可以使用 Mos 对任意鼠标按键进行重新映射或改写, 以适配你的工作流。
+### 鼠标手势
 
-Mos 是免费的开源菜单栏工具，支持 macOS 10.13 及以上版本。
+新增一套全局鼠标手势系统，适合侧键或 Logi 手势键：
 
-## 功能亮点
+- 独立的“鼠标手势”设置页，不混入普通按钮绑定列表。
+- 固定上、右、下、左四向手势，每个方向可单独绑定 trigger 型动作。
+- 按下手势键时在鼠标所在屏幕显示无焦点 overlay，不抢当前 App 焦点。
+- 圆环会在靠近屏幕边缘时整体平移，保证完整可见，但不会移动系统鼠标指针。
+- 只有移动超过 20pt 后才进入方向选择；回到中心区域或松开时未命中已绑定方向会取消。
+- 松开手势键时才触发动作，手势过程中只接管手势键和鼠标移动，其他输入放行。
+- 支持 Escape 取消当前手势会话。
+- 手势键和普通按钮绑定互斥，保存或录制时会阻止同一个鼠标按钮被重复使用。
+- 方向圆环只展示已绑定动作的方向，未绑定方向不参与命中。
 
-- **平滑滚动**：自定义最短步长、速度增益和持续时间，也可以启用模拟触控板模式。
-- **轴向独立**：垂直/水平滚动可以分别设置平滑和反向。
-- **滚动功能键**：为加速、方向转换、禁用平滑滚动绑定任意自定义按键。
-- **按应用配置**：每个 App 可以继承全局设置，也可以单独覆盖滚动、快捷键和按钮绑定规则。
-- **按钮绑定**：录制鼠标、键盘或自定义事件，绑定到系统动作、快捷键、打开 App、运行脚本或打开文件。
-- **动作库**：内置调度中心、空间切换、截图、访达操作、文档编辑、鼠标滚动等常用动作。
-- **Logi/HID++ 支持**：支持 Bolt、Unifying 接收器和蓝牙直连设备上的 Logitech 按钮事件，并可处理 Logi 专有动作。
+### 按钮绑定与动作展示
 
-## 截图
+围绕现有 ButtonBinding 体系做了多项增强：
 
-| 滚动调节 | 按应用配置 |
-| --- | --- |
-| <img src="assets/readme/zh-cn/scrolling.png" alt="Mos 滚动设置" width="420"> | <img src="assets/readme/zh-cn/application-settings.png" alt="Mos 按应用配置设置" width="420"> |
+- 复用现有系统动作、打开目标、Logi 动作和自定义快捷键执行逻辑。
+- 对手势方向动作过滤 stateful action，只允许一次性 trigger action。
+- 为动作选择器整理图标与展示模型，让普通按钮绑定和手势圆环各自使用合适的展示方式。
+- 加强鼠标按钮录制时的冲突检查，避免“已经作为手势入口的按键”继续被添加到普通绑定。
 
-| 打开 App、脚本或文件 | 快捷动作菜单 |
-| --- | --- |
-| <img src="assets/readme/zh-cn/buttons-open.png" alt="Mos 打开动作" width="420"> | <img src="assets/readme/zh-cn/buttons-action.png" alt="Mos 快捷动作菜单" width="420"> |
+### Logitech / HID 集成
 
-## 下载与安装
+继续沿用原有 Logi 边界，新增手势使用来源：
 
-### 手动安装
+- 通过 `UsageSource.mouseGesture` 注册手势键使用，避免与普通按钮绑定的 usage 混淆。
+- 维持 Logi/HID 细节在 `Mos/Logi` 与 `Mos/Integration` 边界内，不让 UI 层直接处理设备协议。
 
-从 [GitHub Releases](https://github.com/Caldis/Mos/releases) 下载最新版本，解压后将 `Mos.app` 放入 `/Applications`。
+### 设置界面与视觉体验
 
-首次启动时，macOS 可能会要求你授予 Mos 辅助功能权限。Mos 需要这项权限读取和重写滚动事件；如果授权后仍无法工作，可以参考 [Wiki 中的权限排查](https://github.com/Caldis/Mos/wiki/%E5%A6%82%E6%9E%9C%E5%BA%94%E7%94%A8%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E8%BF%90%E8%A1%8C)。
+- 新增独立鼠标手势偏好设置页。
+- 按 macOS 风格调整圆环 overlay：无焦点浮层、轻量中心提示、选中扇形外扩、淡入淡出与高亮动效。
+- 设置页预览和运行时 overlay 使用一致的方向、图标和命中语义。
+- UI 文案已接入 `Localizable.xcstrings`。
 
-### Homebrew
+### 测试与质量
 
-如果你习惯用 Homebrew 管理应用：
+新增 `MouseGestureTests`，覆盖：
+
+- 手势启用条件。
+- 鼠标触发键限制。
+- 方向命中和 20pt 启动阈值。
+- 未知方向/未知字段 decode 兼容。
+- open target 数据一致性校验。
+- stateful action 过滤。
+
+已做过的主要验证：
 
 ```bash
-brew install --cask mos
+git diff --check
+swiftc -frontend -parse Mos/InputEvent/MouseGesture.swift Mos/InputEvent/MouseGestureOverlayWindow.swift MosTests/MouseGestureTests.swift
+xcodebuild -scheme Debug -configuration Debug -destination 'platform=macOS' build
 ```
 
-更新：
+当前本机运行 `MosTests` 时会被测试 bundle 和宿主 App 的 Team ID 签名不一致拦住；这是本地签名环境问题，测试目标可以编译，但无法在当前签名配置下加载运行。
+
+## 构建
 
 ```bash
-brew update
-brew upgrade --cask mos
+xcodebuild -scheme Debug -configuration Debug -destination 'platform=macOS' build
 ```
 
-## 贡献
+项目仍是 Swift 5 / AppKit / Xcode 工程，最低支持 macOS 10.13。新增 macOS 新 API 时需要保留 availability gate 或 fallback。
 
-Mos 是一个会处理系统输入、辅助功能权限、Logi/HID 设备和用户持久化配置的小工具。维护成本和回归风险都很真实，所以我们更欢迎小而集中的改动。
+## 与原项目的关系
 
-涉及 Logi/HID、辅助功能权限、签名、notarization、更新机制或真实设备测试的改动风险较高，请先在 issue 或 Discussions 中说明背景。
+- 原作者：Caldis
+- 原项目：[Caldis/Mos](https://github.com/Caldis/Mos)
+- 原官网：[mos.caldis.me](https://mos.caldis.me/)
+- 原中文 README：[README.upstream.zh-CN.md](README.upstream.zh-CN.md)
 
-PR 描述中请说明变更动机、测试方式和可能影响的行为。
-
-> 由 AI 开发的代码已经成为主流，我们理解现在大量的 PR 都经由 AI 生成 (包括我自己)。但提交者仍需要自行理解、整理并验证每一行代码的实际作用, 因为每个 PR 审查都有成本。
-
-### 非常欢迎
-
-- 小范围 bug 修复，并提供复现路径或验证说明。
-- UI/UX 细节修补，例如布局、文案、可读性和引导流程的小改进。
-- 小范围安全加固，例如更稳妥的权限状态处理、输入保护和边界检查。
-- 本地化、文档和测试补充。
-- 单一主题、变更行数较小、容易 review 的 PR。
-
-### 暂不合并
-
-- 未经讨论的大型新功能、模块或架构改造。
-- 大量 AI 生成的代码重写、格式化、迁移或“顺手优化”。
-- 会改变输入事件处理、权限提示、更新检查、旧用户数据读取或持久化格式的行为。
-- 一次性补全大量机器翻译，尤其是无法由母语使用者校对的翻译集。
-
-我们欢迎任何形式的贡献，有任何建议或意见您可以给我们 [提问](https://github.com/Caldis/Mos/issues)。
-
-如果你对新增功能非常有热情，欢迎先在 [Discussions](https://github.com/Caldis/Mos/discussions) 发起讨论。
-
-## 鸣谢
-
-- [Charts](https://github.com/danielgindi/Charts)
-- [LoginServiceKit](https://github.com/Clipy/LoginServiceKit)
-- [Sparkle](https://github.com/sparkle-project/Sparkle)
-- [Smoothscroll-for-websites](https://github.com/galambalazs/smoothscroll-for-websites)
-- [Solaar](https://github.com/pwr-Solaar/Solaar)
+请继续尊重原项目的授权和贡献历史。本分支中的增强工作建立在原 Mos 的长期维护基础之上。
 
 ## License
 
