@@ -7,6 +7,8 @@ import Cocoa
 
 final class MouseGestureOverlayWindow: NSPanel {
     private let content = MouseGestureOverlayView()
+    private var isClosing = false
+    private var retainedDuringClose: MouseGestureOverlayWindow?
 
     init() {
         super.init(
@@ -33,6 +35,7 @@ final class MouseGestureOverlayWindow: NSPanel {
         directions: Set<MouseGestureDirection>,
         presentations: [MouseGestureDirection: MouseGestureActionPresentation]
     ) {
+        isClosing = false
         let targetFrame = Self.frameAround(mouseLocation: mouseLocation, size: frame.size)
         setFrame(targetFrame, display: true)
         content.enabledDirections = directions
@@ -56,7 +59,17 @@ final class MouseGestureOverlayWindow: NSPanel {
     }
 
     func closeOverlay() {
-        orderOut(nil)
+        guard !isClosing else { return }
+        isClosing = true
+        retainedDuringClose = self
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.08
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            animator().alphaValue = 0
+        }, completionHandler: { [weak self] in
+            self?.orderOut(nil)
+            self?.retainedDuringClose = nil
+        })
     }
 
     private func convertScreenPoint(_ point: CGPoint) -> CGPoint {
@@ -87,8 +100,13 @@ final class MouseGestureOverlayView: NSView {
     private var previousSelectedDirection: MouseGestureDirection?
     private var openProgress: CGFloat = 1
     private var selectionPulse: CGFloat = 0
+    private var animationTimers: [Timer] = []
 
     override var isFlipped: Bool { return false }
+
+    deinit {
+        invalidateAnimationTimers()
+    }
 
     func startOpenAnimation() {
         openProgress = 0
@@ -302,14 +320,21 @@ final class MouseGestureOverlayView: NSView {
 
     private func animate(duration: TimeInterval, update: @escaping (CGFloat) -> Void) {
         let start = CACurrentMediaTime()
-        Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { timer in
+        let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] timer in
             let elapsed = CACurrentMediaTime() - start
             let rawProgress = min(1, CGFloat(elapsed / duration))
             let easedProgress = 1 - CGFloat(pow(Double(1 - rawProgress), 3))
             update(easedProgress)
             if rawProgress >= 1 {
                 timer.invalidate()
+                self?.animationTimers.removeAll { $0 === timer }
             }
         }
+        animationTimers.append(timer)
+    }
+
+    private func invalidateAnimationTimers() {
+        animationTimers.forEach { $0.invalidate() }
+        animationTimers.removeAll()
     }
 }

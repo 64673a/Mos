@@ -45,6 +45,7 @@ final class MouseGestureTests: XCTestCase {
         )
 
         XCTAssertNil(tester.direction(at: CGPoint(x: 100, y: 116)))
+        XCTAssertEqual(tester.direction(at: CGPoint(x: 100, y: 122)), .up)
         XCTAssertEqual(tester.direction(at: CGPoint(x: 100, y: 150)), .up)
         XCTAssertEqual(tester.direction(at: CGPoint(x: 150, y: 100)), .right)
         XCTAssertNil(tester.direction(at: CGPoint(x: 50, y: 100)))

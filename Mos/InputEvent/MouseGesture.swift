@@ -137,7 +137,7 @@ struct MouseGestureOptions: Codable, Equatable {
 
 struct MouseGestureHitTester {
     static let activationDistance: CGFloat = 20.0
-    static let cancelRadius: CGFloat = 28.0
+    static let cancelRadius = activationDistance
 
     let center: CGPoint
     let enabledDirections: Set<MouseGestureDirection>
@@ -146,8 +146,7 @@ struct MouseGestureHitTester {
         let dx = point.x - center.x
         let dy = point.y - center.y
         let distance = hypot(dx, dy)
-        guard distance >= Self.activationDistance,
-              distance >= Self.cancelRadius else {
+        guard distance >= Self.activationDistance else {
             return nil
         }
 
