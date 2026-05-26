@@ -112,3 +112,6 @@ xcodebuild -scheme Debug -configuration Debug -destination 'platform=macOS' buil
 Copyright (c) 2017-2026 Caldis. All rights reserved.
 
 Mos 使用 [CC BY-NC 4.0](http://creativecommons.org/licenses/by-nc/4.0/) 授权。请不要将 Mos 上传到 App Store。
+
+## Friend Links
+<a href="https://linux.do">Linux.do</a>
