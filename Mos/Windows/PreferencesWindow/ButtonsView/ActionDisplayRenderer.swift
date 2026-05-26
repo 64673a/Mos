@@ -48,6 +48,27 @@ struct SelectorImage {
 }
 
 struct ActionDisplayRenderer {
+    static func iconImage(for presentation: ActionPresentation, pointSize: CGFloat = 18) -> NSImage? {
+        switch presentation.kind {
+        case .unbound, .recordingPrompt:
+            return nil
+        case .namedAction:
+            let baseImage: NSImage?
+            if #available(macOS 11.0, *), let symbolName = presentation.symbolName {
+                let symbol = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
+                let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+                baseImage = symbol?.withSymbolConfiguration(config) ?? symbol
+            } else {
+                baseImage = nil
+            }
+            return prefixedImageIfNeeded(baseImage, tag: presentation.tag)
+        case .keyCombo:
+            let badgeImage = createBadgeImage(from: presentation.badgeComponents)
+            return prefixedImageIfNeeded(badgeImage, tag: presentation.tag)
+        case .openTarget:
+            return presentation.image.map { resizeForBadge($0, badgeHeight: pointSize) }
+        }
+    }
 
     // 关于 selector 图文间距 (button face vs menu 展开第一行):
     // - placeholderItem.image = raw (NSMenuItemCell 自带间距, 渲染 menu 行)
@@ -84,7 +105,7 @@ struct ActionDisplayRenderer {
 
         case .namedAction:
             let baseImage = createSymbolImage(named: presentation.symbolName)
-            let withTag = prefixedImageIfNeeded(baseImage, tag: presentation.tag)
+            let withTag = Self.prefixedImageIfNeeded(baseImage, tag: presentation.tag)
             let prepared = withTag.map { SelectorImage.prepared($0) }
             apply(title: presentation.title, image: prepared, placeholderItem: placeholderItem, popupButton: popupButton)
 
@@ -92,7 +113,7 @@ struct ActionDisplayRenderer {
             // keyCombo 的内容全部在 badge image 里; 不要给 button face 单独缩放,
             // 否则 menu 第一行和 button face 的可见 badge 尺寸会分裂.
             let badgeImage = Self.createBadgeImage(from: presentation.badgeComponents)
-            let withTag = prefixedImageIfNeeded(badgeImage, tag: presentation.tag)
+            let withTag = Self.prefixedImageIfNeeded(badgeImage, tag: presentation.tag)
             let prepared = withTag.map { SelectorImage.prepared($0) }
             apply(
                 title: presentation.title,
@@ -111,7 +132,10 @@ struct ActionDisplayRenderer {
 
     /// Resize an arbitrary NSImage to match the visual size of system shortcut icons (badge height 17pt).
     private static func resizeForBadge(_ image: NSImage) -> NSImage {
-        let badgeHeight: CGFloat = 17
+        return resizeForBadge(image, badgeHeight: 17)
+    }
+
+    private static func resizeForBadge(_ image: NSImage, badgeHeight: CGFloat) -> NSImage {
         let originalSize = image.size
         guard originalSize.height > 0 else { return image }
         let scale = badgeHeight / originalSize.height
@@ -194,7 +218,7 @@ struct ActionDisplayRenderer {
         return NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
     }
 
-    private func prefixedImageIfNeeded(_ image: NSImage?, tag: BrandTagConfig?) -> NSImage? {
+    private static func prefixedImageIfNeeded(_ image: NSImage?, tag: BrandTagConfig?) -> NSImage? {
         guard let tag else { return image }
         return BrandTag.createPrefixedImage(brand: tag, original: image)
     }

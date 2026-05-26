@@ -43,6 +43,7 @@ class ButtonCore {
     let buttonEventCallBack: CGEventTapCallBack = { (proxy, type, event, refcon) in
         // Tap 被系统禁用时, 清理活跃绑定状态并直接放行
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            MouseGestureController.shared.cancel()
             InputProcessor.shared.clearActiveBindings()
             return Unmanaged.passUnretained(event)
         }
@@ -53,6 +54,12 @@ class ButtonCore {
 
         // 使用原始 flags 匹配绑定 (不注入虚拟修饰键, 保证匹配准确)
         let mosEvent = InputEvent(fromCGEvent: event)
+        switch MouseGestureController.shared.process(mosEvent) {
+        case .consumed:
+            return nil
+        case .passthrough:
+            break
+        }
         let result = InputProcessor.shared.process(mosEvent)
         switch result {
         case .consumed:
@@ -95,6 +102,7 @@ class ButtonCore {
                     for: .defaultTap
                 )
                 dispatchInterceptor?.onRestart = {
+                    MouseGestureController.shared.cancel()
                     InputProcessor.shared.clearActiveBindings()
                 }
                 primaryObservationInterceptor = try Interceptor(
@@ -124,6 +132,7 @@ class ButtonCore {
             dispatchInterceptor = nil
             primaryObservationInterceptor = nil
             InputProcessor.shared.clearActiveBindings()
+            MouseGestureController.shared.cancel()
             isActive = false
         }
     }

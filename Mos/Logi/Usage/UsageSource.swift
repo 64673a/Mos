@@ -3,6 +3,7 @@ import Foundation
 
 public enum UsageSource: Hashable {
     case buttonBinding
+    case mouseGesture
     case globalScroll(ScrollRole)
     /// `key` is the stable identity used by Mos for the per-app entry.
     /// Currently `Application.path`. UsageSource does not require migration

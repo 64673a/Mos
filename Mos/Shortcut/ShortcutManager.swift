@@ -41,7 +41,13 @@ class ShortcutManager {
     /// - Parameter menu: 目标菜单对象
     /// - Parameter target: 菜单项点击事件的目标对象
     /// - Parameter action: 菜单项点击事件的选择器
-    static func buildShortcutMenu(into menu: NSMenu, target: AnyObject, action: Selector, showLogiActions: Bool = false) {
+    static func buildShortcutMenu(
+        into menu: NSMenu,
+        target: AnyObject,
+        action: Selector,
+        showLogiActions: Bool = false,
+        allowedExecutionModes: Set<ActionExecutionMode>? = nil
+    ) {
         // 清空现有菜单项
         menu.removeAllItems()
         menu.autoenablesItems = false
@@ -85,7 +91,10 @@ class ShortcutManager {
             subMenu.autoenablesItems = false
 
             // 添加该分类下的所有快捷键到子菜单(过滤掉当前系统不支持的,保持原始顺序)
-            let availableShortcuts = shortcuts.filter { $0.isAvailable }
+            let availableShortcuts = shortcuts.filter {
+                $0.isAvailable && (allowedExecutionModes?.contains($0.executionMode) ?? true)
+            }
+            guard !availableShortcuts.isEmpty else { continue }
             for shortcut in availableShortcuts {
                 let menuKeyEquivalent = shortcut.keyEquivalent
 
@@ -123,7 +132,8 @@ class ShortcutManager {
             category: SystemShortcut.modifierKeysCategory,
             target: target,
             action: action,
-            totalShortcuts: &totalShortcuts
+            totalShortcuts: &totalShortcuts,
+            allowedExecutionModes: allowedExecutionModes
         )
 
         // 鼠标按键分类 (始终显示)
@@ -132,7 +142,8 @@ class ShortcutManager {
             category: SystemShortcut.mouseButtonsCategory,
             target: target,
             action: action,
-            totalShortcuts: &totalShortcuts
+            totalShortcuts: &totalShortcuts,
+            allowedExecutionModes: allowedExecutionModes
         )
 
         // Mos 鼠标滚动分类 (始终显示, 使用 Mos tag 样式)
@@ -142,7 +153,8 @@ class ShortcutManager {
             target: target,
             action: action,
             totalShortcuts: &totalShortcuts,
-            customImage: BrandTag.createTagImage(brand: .mos, fontSize: 7, height: 14)
+            customImage: BrandTag.createTagImage(brand: .mos, fontSize: 7, height: 14),
+            allowedExecutionModes: allowedExecutionModes
         )
 
         // Logi 专有动作分类 (仅当触发键为 Logi 按键时显示, 使用 Logitech 品牌 tag 样式)
@@ -153,7 +165,8 @@ class ShortcutManager {
                 target: target,
                 action: action,
                 totalShortcuts: &totalShortcuts,
-                customImage: BrandTag.createTagImage(brand: .logi, fontSize: 7, height: 14)
+                customImage: BrandTag.createTagImage(brand: .logi, fontSize: 7, height: 14),
+                allowedExecutionModes: allowedExecutionModes
             )
         }
 
@@ -175,20 +188,22 @@ class ShortcutManager {
         }
         menu.addItem(openItem)
 
-        // "自定义…" 菜单项 (representedObject 为字符串标记)
-        let customItem = NSMenuItem(
-            title: NSLocalizedString("custom-shortcut", comment: ""),
-            action: action,
-            keyEquivalent: ""
-        )
-        customItem.target = target
-        customItem.representedObject = "__custom__" as NSString
-        if supportsSFSymbols {
-            if #available(macOS 11.0, *) {
-                customItem.image = createSymbolImage("keyboard")
+        if allowedExecutionModes == nil || allowedExecutionModes?.contains(.stateful) == true {
+            // "自定义…" 菜单项 (representedObject 为字符串标记)
+            let customItem = NSMenuItem(
+                title: NSLocalizedString("custom-shortcut", comment: ""),
+                action: action,
+                keyEquivalent: ""
+            )
+            customItem.target = target
+            customItem.representedObject = "__custom__" as NSString
+            if supportsSFSymbols {
+                if #available(macOS 11.0, *) {
+                    customItem.image = createSymbolImage("keyboard")
+                }
             }
+            menu.addItem(customItem)
         }
-        menu.addItem(customItem)
     }
 
     /// 将一个分类添加到菜单
@@ -198,7 +213,8 @@ class ShortcutManager {
         target: AnyObject,
         action: Selector,
         totalShortcuts: inout Int,
-        customImage: NSImage? = nil
+        customImage: NSImage? = nil,
+        allowedExecutionModes: Set<ActionExecutionMode>? = nil
     ) {
         let categoryName = SystemShortcut.localizedCategoryName(category.category)
         let categoryMenuItem = NSMenuItem(title: categoryName, action: nil, keyEquivalent: "")
@@ -214,7 +230,10 @@ class ShortcutManager {
 
         let subMenu = NSMenu(title: categoryName)
         subMenu.autoenablesItems = false
-        let availableShortcuts = category.shortcuts.filter { $0.isAvailable }
+        let availableShortcuts = category.shortcuts.filter {
+            $0.isAvailable && (allowedExecutionModes?.contains($0.executionMode) ?? true)
+        }
+        guard !availableShortcuts.isEmpty else { return }
         for shortcut in availableShortcuts {
             let menuKeyEquivalent = shortcut.keyEquivalent
 

@@ -27,6 +27,11 @@ import Cocoa
 class PreferencesTabViewController: NSTabViewController {
     
     let backgroundVisualEffectView = NSVisualEffectView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        installMouseGestureTabIfNeeded()
+    }
     
     override func viewDidAppear() {
         // 移除已有约束
@@ -60,6 +65,23 @@ class PreferencesTabViewController: NSTabViewController {
             Utils.groupAnimatorContainer({(context) in
                 currentWindow.setFrame(targetRect, display: true)
             })
+        }
+    }
+
+    private func installMouseGestureTabIfNeeded() {
+        let identifier = "mouseGesture"
+        guard !tabViewItems.contains(where: { ($0.identifier as? String) == identifier }) else { return }
+
+        let controller = PreferencesMouseGestureViewController()
+        let item = NSTabViewItem(viewController: controller)
+        item.identifier = identifier
+        item.label = NSLocalizedString("mouse_gesture_title", comment: "")
+        item.image = NSImage(named: "SF.lasso.badge.sparkles")
+
+        if let buttonsIndex = tabViewItems.firstIndex(where: { ($0.identifier as? String) == "buttons" }) {
+            insertTabViewItem(item, at: buttonsIndex + 1)
+        } else {
+            addTabViewItem(item)
         }
     }
 }

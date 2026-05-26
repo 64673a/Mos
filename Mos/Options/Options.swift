@@ -42,6 +42,10 @@ struct OptionItem {
         static let Bindings = "buttonBindings"
     }
 
+    struct MouseGesture {
+        static let Config = "mouseGesture"
+    }
+
     struct Application {
         static let Allowlist = "allowlist"
         static let Applications = "applications"
@@ -72,6 +76,10 @@ class Options {
     var buttons = OPTIONS_BUTTONS_DEFAULT() {
         didSet { Options.shared.saveOptions() }
     }
+    // 鼠标手势
+    var mouseGesture = OPTIONS_MOUSE_GESTURE_DEFAULT() {
+        didSet { Options.shared.saveOptions() }
+    }
     // 应用
     var application = OPTIONS_APPLICATION_DEFAULT() {
         didSet { Options.shared.saveOptions() }
@@ -80,6 +88,7 @@ class Options {
     /// 保留无法 decode 的 binding 原始 JSON 元素 (来自未来 Mos 版本).
     /// 在 save 时再合回去, 防止用户升级后再降级时丢失新版数据.
     fileprivate var preservedUnknownBindings: [Any] = []
+    fileprivate var preservedMouseGestureUnknownFields: [String: Any] = [:]
 }
 
 /**
@@ -137,6 +146,8 @@ extension Options {
         // 按钮绑定
         buttons.binding = loadButtonsData()
         ButtonUtils.shared.invalidateCache()
+        // 鼠标手势
+        mouseGesture.config = loadMouseGestureData()
         // 应用
         application.allowlist = UserDefaults.standard.bool(forKey: OptionItem.Application.Allowlist)
         application.applications = loadApplicationsData()
@@ -180,6 +191,8 @@ extension Options {
             }
             // 按钮绑定
             saveButtonBindingsData()
+            // 鼠标手势
+            saveMouseGestureData()
         }
     }
 
@@ -253,6 +266,69 @@ extension Options {
             UserDefaults.standard.set(mergedData, forKey: OptionItem.Button.Bindings)
         } catch {
             NSLog("Failed to encode button bindings data: \(error), skipping save")
+        }
+    }
+
+    // 安全加载鼠标手势配置
+    private func loadMouseGestureData() -> MouseGestureOptions {
+        let rawValue = UserDefaults.standard.object(forKey: OptionItem.MouseGesture.Config)
+        guard let data = rawValue as? Data else {
+            if rawValue != nil {
+                NSLog("Mouse gesture data has wrong type: \(type(of: rawValue)), clearing corrupted data")
+                UserDefaults.standard.removeObject(forKey: OptionItem.MouseGesture.Config)
+            }
+            preservedMouseGestureUnknownFields = [:]
+            return MouseGestureOptions()
+        }
+
+        let result = Self.decodeMouseGestureWithUnknownFields(from: data)
+        preservedMouseGestureUnknownFields = result.unknownFields
+        return result.config ?? MouseGestureOptions()
+    }
+
+    static func decodeMouseGestureWithUnknownFields(
+        from data: Data
+    ) -> (config: MouseGestureOptions?, unknownFields: [String: Any]) {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            NSLog("Mouse gesture data is not a JSON object, returning disabled config")
+            return (config: nil, unknownFields: [:])
+        }
+
+        var knownObject = object
+        let knownKeys: Set<String> = ["triggerEvent", "directions"]
+        let unknownFields = object.filter { !knownKeys.contains($0.key) }
+        for key in unknownFields.keys {
+            knownObject.removeValue(forKey: key)
+        }
+
+        guard JSONSerialization.isValidJSONObject(knownObject),
+              let knownData = try? JSONSerialization.data(withJSONObject: knownObject),
+              let config = try? JSONDecoder().decode(MouseGestureOptions.self, from: knownData) else {
+            NSLog("Failed to decode mouse gesture config, disabling gesture while preserving raw fields")
+            return (config: nil, unknownFields: unknownFields)
+        }
+
+        return (config: config, unknownFields: unknownFields)
+    }
+
+    static func decodeMouseGesture(from data: Data) -> MouseGestureOptions? {
+        return decodeMouseGestureWithUnknownFields(from: data).config
+    }
+
+    private func saveMouseGestureData() {
+        do {
+            let knownData = try encoder.encode(mouseGesture.config)
+            guard var merged = try JSONSerialization.jsonObject(with: knownData) as? [String: Any] else {
+                NSLog("Failed to round-trip mouse gesture config to JSON object, skipping save")
+                return
+            }
+            for (key, value) in preservedMouseGestureUnknownFields {
+                merged[key] = value
+            }
+            let mergedData = try JSONSerialization.data(withJSONObject: merged)
+            UserDefaults.standard.set(mergedData, forKey: OptionItem.MouseGesture.Config)
+        } catch {
+            NSLog("Failed to encode mouse gesture data: \(error), skipping save")
         }
     }
 

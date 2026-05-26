@@ -26,6 +26,10 @@ final class LogiIntegrationBridge: LogiExternalBridge {
             return .consumed
         }
 
+        if MouseGestureController.shared.process(event) == .consumed {
+            return .consumed
+        }
+
         // Probe for logi* binding; the session executes the action so the
         // hardware action stays scoped to the originating device (no global
         // activeBindings registration).

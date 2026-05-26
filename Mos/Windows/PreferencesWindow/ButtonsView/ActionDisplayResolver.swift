@@ -81,6 +81,21 @@ enum CellActionState: Equatable {
 }
 
 struct ActionDisplayResolver {
+    func resolve(action: MouseGestureAction?) -> ActionPresentation {
+        guard let action, action.isBound else {
+            return resolve(state: .unbound)
+        }
+        if let openTarget = action.openTarget {
+            return resolve(state: .openTarget(openTarget))
+        }
+        if let shortcut = SystemShortcut.getShortcut(named: action.systemShortcutName) {
+            return resolve(state: .namedShortcut(shortcut))
+        }
+        if action.systemShortcutName.hasPrefix("custom::") {
+            return resolve(state: .customBinding(name: action.systemShortcutName))
+        }
+        return resolve(state: .unbound)
+    }
 
     /// 主入口: 接收单一态枚举, 内部 switch 全 case 强制覆盖.
     func resolve(state: CellActionState) -> ActionPresentation {

@@ -143,9 +143,9 @@ extension PreferencesButtonsViewController {
             self?.recorder.startRecording(from: target)
         }
     }
-    
+
     private func addRecordedEvent(_ event: InputEvent, isDuplicate: Bool) {
-        let recordedEvent = normalizedRecordedEventForButtonBinding(from: event)
+        let recordedEvent = MouseButtonBindingRecorderSupport.normalizedRecordedEventForButtonBinding(from: event)
         let normalizedDuplicate = buttonBindings.contains(where: { $0.triggerEvent == recordedEvent })
 
         if normalizedDuplicate {
@@ -550,19 +550,23 @@ private extension NSTableView {
 // MARK: - EventRecorderDelegate
 extension PreferencesButtonsViewController: KeyRecorderDelegate {
     func validateRecordedEvent(_ recorder: KeyRecorder, event: InputEvent) -> Bool {
-        let recordedEvent = normalizedRecordedEventForButtonBinding(from: event)
-        return !buttonBindings.contains(where: { $0.triggerEvent == recordedEvent })
+        let recordedEvent = MouseButtonBindingRecorderSupport.normalizedRecordedEventForButtonBinding(from: event)
+        return !buttonBindings.contains(where: { $0.triggerEvent == recordedEvent }) &&
+            Options.shared.mouseGesture.config.triggerEvent != recordedEvent
     }
 
     func onEventRecorded(_ recorder: KeyRecorder, didRecordEvent event: InputEvent, isDuplicate: Bool) {
+        guard !isDuplicate else {
+            let recordedEvent = MouseButtonBindingRecorderSupport.normalizedRecordedEventForButtonBinding(from: event)
+            if let existing = buttonBindings.first(where: { $0.triggerEvent == recordedEvent }) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + KeyRecorder.recordingFeedbackDelay(isDuplicate: true)) { [weak self] in
+                    self?.highlightExistingRow(with: existing.id)
+                }
+            }
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + KeyRecorder.recordingFeedbackDelay(isDuplicate: isDuplicate)) { [weak self] in
             self?.addRecordedEvent(event, isDuplicate: isDuplicate)
         }
-    }
-
-    private func normalizedRecordedEventForButtonBinding(from event: InputEvent) -> RecordedEvent {
-        let recordedEvent = RecordedEvent(from: event)
-        let diagnosis = LogiCenter.shared.buttonCaptureDiagnosis(forMosCode: event.code)
-        return recordedEvent.normalizedForButtonBinding(diagnosis: diagnosis)
     }
 }

@@ -20,13 +20,24 @@ enum LogiUsageBootstrap {
         )
         LogiCenter.shared.setUsage(source: .buttonBinding, codes: buttonCodes)
 
-        // 2. Global scroll
+        // 2. Mouse gesture trigger
+        let gestureCodes: Set<UInt16> = {
+            guard let trigger = Options.shared.mouseGesture.config.triggerEvent,
+                  trigger.type == .mouse,
+                  LogiCenter.shared.isLogiCode(trigger.code) else {
+                return []
+            }
+            return [trigger.code]
+        }()
+        LogiCenter.shared.setUsage(source: .mouseGesture, codes: gestureCodes)
+
+        // 3. Global scroll
         for role in ScrollRole.allCases {
             let codes = globalScrollCodes(role: role)
             LogiCenter.shared.setUsage(source: .globalScroll(role), codes: codes)
         }
 
-        // 3. App scroll
+        // 4. App scroll
         let apps = Options.shared.application.applications
         for i in 0..<apps.count {
             guard let app = apps.get(by: i) else { continue }

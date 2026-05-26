@@ -8,7 +8,7 @@
 
 import Cocoa
 
-enum ActionExecutionMode {
+enum ActionExecutionMode: Hashable {
     case trigger
     case stateful
 }
