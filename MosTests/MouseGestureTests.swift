@@ -7,6 +7,20 @@ final class MouseGestureTests: XCTestCase {
         return RecordedEvent(type: .mouse, code: code, modifiers: 0, displayComponents: ["Mouse"], deviceFilter: nil)
     }
 
+    func testEscapePassesThroughWhenGestureSessionIsInactive() {
+        MouseGestureController.shared.cancel()
+        let escape = InputEvent(
+            type: .keyboard,
+            code: KeyCode.escape,
+            modifiers: CGEventFlags(rawValue: 0),
+            phase: .down,
+            source: .hidPP,
+            device: nil
+        )
+
+        XCTAssertEqual(MouseGestureController.shared.process(escape), .passthrough)
+    }
+
     func testMouseGestureOptionsRequiresTriggerAndAtLeastOneAction() {
         var config = MouseGestureOptions()
         XCTAssertFalse(config.isEnabled)

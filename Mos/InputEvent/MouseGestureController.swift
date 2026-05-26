@@ -26,11 +26,6 @@ final class MouseGestureController {
     init() {}
 
     func process(_ event: InputEvent) -> MouseGestureResult {
-        if event.isEscapeKeyDown {
-            cancel(suppressTriggerUp: true)
-            return .consumed
-        }
-
         if event.phase == .up,
            matchesTrigger(event, trigger: suppressedTriggerAfterCancel) {
             suppressedTriggerAfterCancel = nil
@@ -41,6 +36,10 @@ final class MouseGestureController {
         }
 
         if let session {
+            if event.isEscapeKeyDown {
+                cancel(suppressTriggerUp: true)
+                return .consumed
+            }
             return processActiveSession(event, session: session)
         }
 
